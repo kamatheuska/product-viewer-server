@@ -1,0 +1,40 @@
+{
+  "name": "product-viewer",
+  "version": "0.1.0",
+  "description": "Website backend for app manager for small business",
+  "author": "Nicolas Ramirez <nico9017@gmail.com>",
+  "private": true,
+  "scripts": {
+    "test": "nodemon --ext js --exec 'clear; tape tests/**.*.js | bin/tap-spec'",
+    "testmin": "nodemon --ext js --exec 'clear; tape tests/**.*.js | bin/tap-min'",
+    "start": "node server.js",
+    "serverlint": "nodemon --exec 'clear; eslint **/*.js'",
+    "serverlintfix": "nodemon --exec 'clear; eslint **/*.js --fix'"
+  },
+  "dependencies": {
+    "axios": "^0.18.0",
+    "csv-parse": "^2.5.0",
+    "eslint": "^5.1.0",
+    "express": "^4.16.3",
+    "falafel": "^2.1.0",
+    "lodash": "^4.17.10",
+    "mongodb": "^3.1.1",
+    "mongoose": "^5.2.2",
+    "multer": "^1.3.1",
+    "nock": "^9.4.4",
+    "node-mocks-http": "^1.7.0",
+    "nodemon": "^1.18.3",
+    "morgan": "^1.9.0"
+  },
+  "devDependencies": {
+    "faucet": "0.0.1",
+    "supertest": "^3.1.0",
+    "tap-min": "^1.2.2",
+    "tap-spec": "^5.0.0",
+    "tape": "^4.9.1"
+  },
+  "engines": {
+    "node": "^8.9.3",
+    "npm": "^5.6.0"
+  }
+}
