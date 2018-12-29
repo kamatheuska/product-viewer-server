@@ -1,25 +1,9 @@
 process.env.NODE_ENV = 'test'
 
-const test = require('tape')
-const path = require('path')
-const app = require('../app')
+// const test = require('tape')
+// const app = require('../app')
+// const request = require('supertest')
 
-
-const { isObject, isGreaterNumber } = require('../helpers')
-
-test('It should do something interesting', { skip: true }, (t) => {
-  t.test('more stuff to assert', function (assert) {
-    request(app)
-      .get('some/cool/route')
-      .send(obj)
-      .expect(200)
-      .end((err, res) => {
-        assert.error(err,
-        'Should return undefined if no error.')
-        assert.end()
-      })
-  })
-})
 // let req, res
 
 // const { bufferToString } = require('../middleware')
