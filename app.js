@@ -1,5 +1,3 @@
-require('./config')
-
 const path = require('path')
 const express = require('express')
 const morgan = require('morgan')
@@ -7,9 +5,13 @@ const bodyParser = require('body-parser')
 const app = express()
 const dist = path.join(__dirname, 'dist')
 
+const {
+    nodeEnv
+} = require('./config')
+
 app.use(express.static(dist))
 
-if (process.env.NODE_ENV === 'development') {
+if (nodeEnv === 'development') {
     app.use(morgan('dev'))
 }
 app.use(morgan('dev'))
