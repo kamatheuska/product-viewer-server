@@ -16,9 +16,13 @@ const {
     isGreaterNumber
 } = require('./validate')
 
-const { wrapAsync } = require('./async')
-
 module.exports = {
+    wrapAsync (middlewarePromise) { 
+        return (req, res, next) =>
+            middlewarePromise(req, res, next)
+                .then(() => next())
+                .catch(next)
+    },
     formatCsv,
     validateString,
     getUniqueElements,
@@ -27,6 +31,5 @@ module.exports = {
     isTruthy,
     isObject,
     isGreaterNumber,
-    wrapAsync,
     reduceDictionary
 }

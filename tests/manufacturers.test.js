@@ -4,42 +4,43 @@ const test = require('tape').test
 const request = require('supertest')
 
 const { app } = require('../app.js')
-const { mongoose } = require('../db/mongoose')
-
+const { Manufacturer } = require('../models/Manufacturer')
 const { isObject } = require('../helpers')
 
-const { Manufacturer } = require('../models/Manufacturer')
-const { populateCollection, seed } = require('./seed')
+const {
+    populateCollection,
+    clearCollection,
+    seedItems,
+    teardown
+} = require('./seed/utils')
 
-test.onFinish(() => {
-    mongoose.models = {}
-    mongoose.modelSchemas = {}
-    mongoose.connection.close()
-})
+test.onFinish(() => teardown([ Manufacturer ]))
+test.onFailure(() => teardown([ Manufacturer ], true))
 
 test('POST /manufacturers/add', { skip: false }, (t) => {
     t.comment('+----------------------------------------------------MANUFACTURERS+')
+    clearCollection(t, { model: Manufacturer })
+    let manufacturers = seedItems('manufacturers')
+
     t.test('Add a new item to the manufacturers collection', { skip: false }, function (assert) {
         request(app)
             .post('/manufacturers/add')
-            .send(seed.manufacturers[0])
+            .send(manufacturers[0])
             .expect(200)
-            .end((err, res) => {
-                assert.error(err,
-                    'Should return undefined if no error.')
+            .expect((res) => {
                 assert.error(res.error,
                     'Should return undefined if no error in the server.')
-                Manufacturer.findById(res.body._id).then((item) => {
-                    assert.true(isObject(item),
-                        'Item exist and is an object')
-                    assert.equal(item.country, seed.manufacturers[0].country,
-                        'Entry should be equal to added manufacturer')
-                    assert.end()
-                }).catch((err) => {
-                    assert.error(err, 'Should not be returned')
-                    assert.end()
-                })
+                Manufacturer
+                    .findById(res.body._id)
+                    .then((item) => {
+                        assert.true(isObject(item),
+                            'Item exist and is an object')
+                        assert.equal(item.country, manufacturers[0].country,
+                            'Entry should be equal to added manufacturer')
+                    })
+                    .catch(assert.error)
             })
+            .end(assert.end)
     })
 
     t.test('FAIL: Add a manufacturer without name', { skip: false }, function (assert) {
@@ -52,47 +53,42 @@ test('POST /manufacturers/add', { skip: false }, (t) => {
             .post('/manufacturers/add')
             .send(fail)
             .expect(400)
-            .end((err, res) => {
-                assert.error(err,
-                    'Should return undefined if no error.')
-                assert.true(res.error,
-                    'Should return an error object')
-                assert.end()
-            })
+            .end(assert.end)
     })
 })
 
-populateCollection(Manufacturer, seed.manufacturers, false)
 test('GET /manufacturers', { skip: false }, (t) => {
+    let manufacturers = seedItems('manufacturers')
+    populateCollection(t, { model: Manufacturer, items: manufacturers })
+
     t.test('Should get all the manufacturers in the DB', function (assert) {
         request(app)
             .get('/manufacturers')
             .expect(200)
-            .end((err, res) => {
+            .expect((res) => {
                 let keys = Object.keys(res.body[0])
-                assert.error(err,
-                    'Should return undefined if no error.')
+                console.log('Printing- - - - -:res.body', res.body)
                 assert.error(res.error.text,
                     'Should return undefined if no error in the server.')
                 assert.true(isObject(res.body),
                     'Should return a parsed object.')
-                assert.equal(res.body[0].name, 'Coca Cola',
-                    'Model of returned manufacturer should equal Coca Cola')
                 assert.equal(res.body.length, 3,
                     'Object returned should have a lenght of 3.')
                 assert.equal(keys.length, 5,
                     'Returned object should have 5 key value pairs.')
-                assert.end()
             })
+            .end(assert.end)
     })
 })
 
-populateCollection(Manufacturer, seed.manufacturers, false)
 test('UPDATE /manufacturers/update', { skip: false }, (t) => {
     let update = {
         name: 'BEST NAME UPDATE!!',
         country: 'ALBANIA'
     }
+    let manufacturers = seedItems('manufacturers')
+    populateCollection(t, { model: Manufacturer, items: manufacturers })
+
     t.test('should update a manufacturer on the DB with the provided ID', { skip: false }, function (assert) {
         request(app)
             .get('/manufacturers')
@@ -106,17 +102,15 @@ test('UPDATE /manufacturers/update', { skip: false }, (t) => {
                     .put(`/manufacturers/update/${id}`)
                     .send(update)
                     .expect(200)
-                    .end((err, res) => {
-                        assert.error(err,
-                            'Should return undefined if no error.')
+                    .expect((res) => {
                         assert.error(res.error.text,
                             'Should return undefined if no error in the server.')
                         assert.true(isObject(res.body),
                             'Should return a parsed object.')
                         assert.equal(res.body.name, update.name,
                             'Born property should equal 2018')
-                        assert.end()
                     })
+                    .end(assert.end)
             })
     })
 
@@ -125,14 +119,8 @@ test('UPDATE /manufacturers/update', { skip: false }, (t) => {
         request(app)
             .put(`/manufacturer/update/${falsyID}`)
             .send(update)
-            .expect(400)
-            .end((err, res) => {
-                assert.true(err,
-                    'Should return an error.')
-                assert.true(isObject(res.body),
-                    'Should return a error object.')
-                assert.end()
-            })
+            .expect(404)
+            .end(assert.end)
     })
 
     t.test('should fail updating an item on the DB with a falsy country', { skip: false }, (assert) => {
@@ -152,20 +140,16 @@ test('UPDATE /manufacturers/update', { skip: false }, (t) => {
                 request(app)
                     .put(`/manufacturer/update/${id}`)
                     .send(badItem)
-                    .expect(400)
-                    .end((err, res) => {
-                        assert.true(err,
-                            'Should return an error.')
-                        assert.true(isObject(res.body),
-                            'Should return a error object.')
-                        assert.end()
-                    })
+                    .expect(404)
+                    .end(assert.end)
             })
     })
 })
 
-populateCollection(Manufacturer, seed.manufacturers, { skip: false })
 test('DELETE /manufacturers', { skip: false }, function (t) {
+    let manufacturers = seedItems('manufacturers')
+    populateCollection(t, { model: Manufacturer, items: manufacturers })
+
     t.test('should delete a manufacturer from the DB with the provided ID', (assert) => {
         request(app)
             .get('/manufacturers')
@@ -178,17 +162,18 @@ test('DELETE /manufacturers', { skip: false }, function (t) {
                 request(app)
                     .delete(`/manufacturers/delete/${id}`)
                     .expect(200)
-                    .end((err, res) => {
-                        assert.error(err,
-                            'Should return undefined if no error.')
+                    .expect((res) => {
                         assert.error(res.error.text,
                             'Should return undefined if no error in the server.')
-                        Manufacturer.find({}).then((data) => {
-                            assert.equal(data.length, 2,
-                                'Object after DELETING should have a length of 2')
-                            assert.end()
-                        })
+                        Manufacturer
+                            .find({})
+                            .then((data) => {
+                                assert.equal(data.length, 2,
+                                    'Object after DELETING should have a length of 2')
+                            })
+                            .catch(assert.error)
                     })
+                    .end(assert.end)
             })
     })
 
@@ -196,14 +181,15 @@ test('DELETE /manufacturers', { skip: false }, function (t) {
         request(app)
             .delete(`/manufacturers/delete/999999`)
             .expect(400)
-            .end((err, res) => {
-                assert.error(err,
-                    'Should return undefined if no error.')
-                Manufacturer.find({}).then((data) => {
-                    assert.equal(data.length, 2,
-                        'Object after DELETING should have a length of 2')
-                    assert.end()
-                })
+            .expect((res) => {
+                Manufacturer
+                    .find({})
+                    .then((data) => {
+                        assert.equal(data.length, 2,
+                            'Object after DELETING should have a length of 2')
+                    })
+                    .catch(assert.error)
             })
+            .end(assert.end)
     })
 })

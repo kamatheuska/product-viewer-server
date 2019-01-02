@@ -2,8 +2,12 @@ const mongoose = require('mongoose')
 const Types = mongoose.Schema.Types
 const _ = require('lodash')
 
-const { isTruthy } = require('../helpers')
-const { countries } = require('../public/dictionary')
+const {
+    isTruthy
+} = require('../helpers')
+const {
+    countries
+} = require('../public/dictionary')
 
 const DesignerSchema = new mongoose.Schema({
     name: {

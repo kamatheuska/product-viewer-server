@@ -1,7 +1,4 @@
-const { mockHttpObjects } = require('./middleware')
-const { populateCollection, clearCollection } = require('./collection')
-
-const seed = {
+module.exports = {
     products: [
         {
             'title': 'APARADOR DANES MARRON AMARILLO AZUL ROJO CHAPEADO',
@@ -87,10 +84,5 @@ const seed = {
 10003,Aparador danes teka  . Marron fabricado por  RT Mobel. L.226 H. 86 A. 44 cm.,2600,ALMACENAMIENTO///APARADORES:::ALMACENAMIENTO,1
 10006,Aparadores Set 2 und. En madera  de palisandro marron.  60S H. 53 L. 100  A. 50 cm.,1900,ALMACENAMIENTO///APARADORES:::ALMACENAMIENTO,1
 `)
-}
-module.exports = {
-    populateCollection,
-    clearCollection,
-    mockHttpObjects,
-    seed
+
 }

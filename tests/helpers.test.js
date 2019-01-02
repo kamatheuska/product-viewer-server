@@ -8,7 +8,7 @@ const {
 
 test('FORMAT CSV: ', { skip: false }, (t) => {
     t.comment('+-------------------------------------------------------HELPERS+')
-    t.test('it should return an object from a csv formatted string', function (assert) {
+    t.test('it should return an object from a csv formatted string', { skip: false }, function (assert) {
         let csv =
       `first name, last name, email, date
        adam, doe, adamdoe@example.com, 1239755004
@@ -22,31 +22,19 @@ test('FORMAT CSV: ', { skip: false }, (t) => {
 })
 
 test('VALIDATION HELPERS:', { skip: false }, (t) => {
-    t.test('isTruthy() is a Promise and should resolve with a boolean', function (assert) {
+    t.test('isTruthy() should return a boolean', { skip: false }, function (assert) {
         let testStr = 'This is a test'
-
-        isTruthy(testStr)
-            .then((res) => {
-                assert.true(res,
-                    'Response should be true')
-                assert.end()
-            })
-            .catch((err) => err)
+        let result = isTruthy(testStr)
+        assert.true(result,
+            'Response should be true')
+        assert.end()
     })
 
-    t.test('isTruthy() should resolve with a value of false', function (assert) {
+    t.test('isTruthy() should resolve with a value of false', { skip: false }, function (assert) {
         let testBadStr = null
-
-        isTruthy(testBadStr)
-            .then((res) => {
-                assert.true(!res,
-                    'Response should not exist. A rejected objected should pass instead')
-                assert.end()
-            })
-            .catch((err) => {
-                assert.error(err,
-                    'Should return undefined if no error.')
-                assert.end()
-            })
+        let result = isTruthy(testBadStr)
+        assert.true(!result,
+            'Response should not exist. A rejected objected should pass instead')
+        assert.end()
     })
 })

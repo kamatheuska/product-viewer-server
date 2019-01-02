@@ -1,8 +1,7 @@
 const parse = require('csv-parse/lib/sync')
-const _ = require('lodash')
 
-const holder = {
-    product: {
+const setupProductModel = function () {
+    return {
         title: '',
         model: '',
         description: '',
@@ -53,7 +52,7 @@ const validateString = function (query) {
 }
 
 const mapLegacyToCurrent = function (legacy) {
-    let current = _.cloneDeep(holder.product)
+    let current = setupProductModel()
     for (let key in legacy) {
         switch (key.toLowerCase()) {
             case 'precio':

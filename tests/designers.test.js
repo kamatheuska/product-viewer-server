@@ -2,45 +2,45 @@ process.env.NODE_ENV = 'test'
 
 const test = require('tape').test
 const request = require('supertest')
-
 const { app } = require('../app.js')
-const { mongoose } = require('../db/mongoose')
-const { isObject, isGreaterNumber } = require('../helpers')
-
 const { Designer } = require('../models/Designer')
-const { populateCollection, seed } = require('./seed')
+const {
+    isObject,
+    isGreaterNumber,
+    isTruthy
+} = require('../helpers')
+const {
+    populateCollection,
+    seedItems,
+    teardown
+} = require('./seed/utils')
 
-test.onFinish(() => {
-    mongoose.models = {}
-    mongoose.modelSchemas = {}
-    mongoose.connection.close()
-})
+test.onFinish(() => teardown([ Designer ]))
+test.onFailure(() => teardown([ Designer ], true))
 
 test('POST /designers/add', { skip: false }, (t) => {
     t.comment('+-------------------------------------------------------DESIGNERS+')
+    let designers = seedItems('designers')
+    populateCollection(t, { model: Designer, items: designers })
     t.test('Add a new item to the designer collection', { skip: false }, function (assert) {
         request(app)
             .post('/designers/add')
-            .send(seed.designers[0])
+            .send(designers[0])
             .expect(200)
-            .end((err, res) => {
-                assert.error(err,
-                    'Should return undefined if no error.')
-                assert.error(res.error,
-                    'Should return undefined if no error in the server.')
-                Designer.findById(res.body._id).then((item) => {
-                    assert.true(isObject(item),
-                        'Item exist and is an object')
-                    assert.true(isGreaterNumber(item.bio.died, 1000),
-                        'Year of dead should be greater than 1000')
-                    assert.true(isGreaterNumber(item.bio.born, 1000),
-                        'Year of birth should be greater than 1000')
-                    assert.end()
-                }).catch((err) => {
-                    assert.error(err, 'Should not be returned')
-                    assert.end()
-                })
+            .expect((res) => {
+                assert.true(isTruthy(res.body._id),
+                    'ObjectId should be returned by the server.')
+                Designer.findById(res.body._id)
+                    .then((item) => {
+                        assert.true(isObject(item),
+                            'Item exist and is an object')
+                        assert.true(isGreaterNumber(item.bio.died, 1000),
+                            'Year of dead should be greater than 1000')
+                        assert.true(isGreaterNumber(item.bio.born, 1000),
+                            'Year of birth should be greater than 1000')
+                    })
             })
+            .end(assert.end)
     })
 
     t.test('FAIL: Add a designer without name', { skip: false }, function (assert) {
@@ -58,8 +58,8 @@ test('POST /designers/add', { skip: false }, (t) => {
             .post('/designers/add')
             .send(fail)
             .expect(400)
-            .end((err, res) => {
-                assert.error(err,
+            .end((error, res) => {
+                assert.error(error,
                     'Should return undefined if no error.')
                 assert.true(res.error,
                     'Should return an error object')
@@ -68,15 +68,17 @@ test('POST /designers/add', { skip: false }, (t) => {
     })
 })
 
-populateCollection(Designer, seed.designers, false)
 test('GET /designers', { skip: false }, (t) => {
-    t.test('Should get all the designers in the DB', function (assert) {
+    let designers = seedItems('designers')
+    populateCollection(t, { model: Designer, items: designers })
+
+    t.test('Should get all the designers in the DB', { skip: false }, function (assert) {
         request(app)
             .get('/designers')
             .expect(200)
-            .end((err, res) => {
+            .end((error, res) => {
                 let keys = Object.keys(res.body[0])
-                assert.error(err,
+                assert.error(error,
                     'Should return undefined if no error.')
                 assert.error(res.error.text,
                     'Should return undefined if no error in the server.')
@@ -93,12 +95,13 @@ test('GET /designers', { skip: false }, (t) => {
     })
 })
 
-populateCollection(Designer, seed.designers, false)
 test('UPDATE /designers/update', { skip: false }, (t) => {
+    let designers = seedItems('designers')
     let update = {
         name: 'BEST NAME UPDATE!!',
         bio: { born: 2018 }
     }
+    populateCollection(t, { model: Designer, items: designers })
     t.test('should update a designer on the DB with the provided ID', { skip: false }, function (assert) {
         request(app)
             .get('/designers')
@@ -112,8 +115,8 @@ test('UPDATE /designers/update', { skip: false }, (t) => {
                     .put(`/designers/update/${id}`)
                     .send(update)
                     .expect(200)
-                    .end((err, res) => {
-                        assert.error(err,
+                    .end((error, res) => {
+                        assert.error(error,
                             'Should return undefined if no error.')
                         assert.error(res.error.text,
                             'Should return undefined if no error in the server.')
@@ -132,8 +135,8 @@ test('UPDATE /designers/update', { skip: false }, (t) => {
             .put(`/designer/update/${falsyID}`)
             .send(update)
             .expect(400)
-            .end((err, res) => {
-                assert.true(err,
+            .end((error, res) => {
+                assert.true(error,
                     'Should return an error.')
                 assert.true(isObject(res.body),
                     'Should return a error object.')
@@ -142,9 +145,10 @@ test('UPDATE /designers/update', { skip: false }, (t) => {
     })
 })
 
-populateCollection(Designer, seed.designers, { skip: false })
 test('DELETE /designers', { skip: false }, function (t) {
-    t.test('should delete a designer from the DB with the provided ID', (assert) => {
+    let designers = seedItems('designers')
+    populateCollection(t, { model: Designer, items: designers })
+    t.test('should delete a designer from the DB with the provided ID', { skip: false }, (assert) => {
         request(app)
             .get('/designers')
             .then((res) => {
@@ -156,8 +160,8 @@ test('DELETE /designers', { skip: false }, function (t) {
                 request(app)
                     .delete(`/designers/delete/${id}`)
                     .expect(200)
-                    .end((err, res) => {
-                        assert.error(err,
+                    .end((error, res) => {
+                        assert.error(error,
                             'Should return undefined if no error.')
                         assert.error(res.error.text,
                             'Should return undefined if no error in the server.')
@@ -174,8 +178,8 @@ test('DELETE /designers', { skip: false }, function (t) {
         request(app)
             .delete(`/designers/delete/999999`)
             .expect(400)
-            .end((err, res) => {
-                assert.error(err,
+            .end((error, res) => {
+                assert.error(error,
                     'Should return undefined if no error.')
                 Designer.find({}).then((data) => {
                     assert.equal(data.length, 3,

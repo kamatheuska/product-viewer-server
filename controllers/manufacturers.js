@@ -2,29 +2,25 @@ const express = require('express')
 const router = express.Router()
 const { Manufacturer } = require('../models/Manufacturer')
 
-router.get('/', (req, res) => {
+router.get('/', (req, res, next) => {
     Manufacturer.find()
         .then((data) => {
             res.status(200).send(data)
         })
-        .catch((err) => {
-            res.status(400).send(err)
-        })
+        .catch(next)
 })
 
-router.post('/add', (req, res) => {
+router.post('/add', (req, res, next) => {
     let manufacturer = new Manufacturer(req.body)
 
     manufacturer.save()
         .then((item) => {
             res.status(200).send(item)
         })
-        .catch((err) => {
-            res.status(400).json(err)
-        })
+        .catch(next)
 })
 
-router.put('/update/:id', (req, res) => {
+router.put('/update/:id', (req, res, next) => {
     let update = req.body
 
     let id = req.params.id
@@ -36,20 +32,16 @@ router.put('/update/:id', (req, res) => {
         .then((data) => {
             res.status(200).send(data)
         })
-        .catch((err) => {
-            res.status(400).send(err)
-        })
+        .catch(next)
 })
 
-router.delete('/delete/:id', (req, res) => {
+router.delete('/delete/:id', (req, res, next) => {
     let id = req.params.id
     Manufacturer.findByIdAndRemove(id)
         .then((result) => {
             res.status(200).send(result)
         })
-        .catch((err) => {
-            res.status(400).send(err)
-        })
+        .catch(next)
 })
 
 module.exports = router

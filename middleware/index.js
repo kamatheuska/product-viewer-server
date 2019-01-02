@@ -1,23 +1,28 @@
 const multer = require('multer')
 const storage = multer.memoryStorage()
 const upload = multer({ storage }).single('data')
-const { Product } = require('../models/Product')
-
+const {
+    Product
+} = require('../models/Product')
+const {
+    throwNewError
+} = require('../middleware/errors')
 const {
     formatCsv,
     mapLegacyToCurrent,
     getCountDictionary,
-    reduceDictionary } = require('../helpers')
+    reduceDictionary
+} = require('../helpers')
 
 module.exports = {
     uploadFile: (req, res, next) =>
         new Promise((resolve, reject) => {
-            upload(req, res, (err) => {
-                if (err) {
-                    reject(new Error('Error on Multer reading formData'))
-                    return
+            upload(req, res, (error) => {
+                if (error) {
+                    reject(throwNewError('Error on Multer reading formData'))
+                } else {
+                    resolve(next)
                 }
-                resolve(next)
             })
         }),
 
@@ -27,46 +32,33 @@ module.exports = {
                 req.csv = req.file.buffer.toString()
                 resolve(next)
             } else {
-                reject(new Error('No buffer on the request object'))
+                reject(throwNewError('No buffer on the request object'))
             }
         }),
 
     csvToObject: (req, res, next) =>
         new Promise((resolve, reject) => {
             try {
-                let collection = formatCsv(req.csv)
+                req.results = formatCsv(req.csv)
                     .map(mapLegacyToCurrent)
-                req.results = collection
                 resolve(next)
             } catch (e) {
-                reject(new Error('Error inside CSV Map'))
+                reject(throwNewError('Error inside CSV Map'))
             }
-            // console.log('---->>  logging...\n', JSON.stringify(collection, undefined, 2))
         }),
 
     parseAndCountField: (req, res, next) => {
-        Product.find().then((data) => {
-            req.results = getCountDictionary(data)
-            next()
-        })
-            .catch((err) => { throw new Error(err) })
+        Product
+            .find()
+            .then((data) => {
+                req.results = getCountDictionary(data)
+                next()
+            })
+            .catch(throwNewError)
     },
 
     getMostRepeatedWords: (req, res, next) => {
         req.results = reduceDictionary(req.results)
         next()
     }
-
-    // generateCsv: (req, res, next) => {
-    //   Product.find().then((data) => {
-    //     let parseDB = new ParseDB(data)
-    //     if (parseDB) {
-    //       req.results = parseDB.getCountDictionary().reduce(convert.generateCsv)
-    //     } else {
-
-    //     }
-    //   })
-    //     .then(() => next())
-    //     .catch((err) => { throw err })
-    // }
 }
